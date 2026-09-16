@@ -19,6 +19,8 @@ var currentTurnIdx = -1;
 var replaying = false;
 
 var issues = [];
+// CHOOSATRON: printer coverage warnings, merged with whatever inklecate reports.
+var choosatronIssues = [];
 var selectedIssueIdx = -1;
 
 var locationInSourceCallbackObj = null;
@@ -249,7 +251,7 @@ ipc.on("play-generated-errors", (event, errors, fromSessionId) => {
     // Finished compiling for sure
     updateCompilerIsBusy(false);
 
-    issues = errors;
+    issues = errors.concat(choosatronIssues); // CHOOSATRON: keep ours alongside inklecate's
     events.errorsAdded(errors);
 });
 
@@ -410,6 +412,11 @@ exports.LiveCompiler = {
     setEvents: (e) => { events = e; },
     getIssues: () => { return issues; },
     getIssuesForFilename: (filename) => _.filter(issues, i => i.filename == filename),
+    // CHOOSATRON: swap in a fresh set of our warnings, leaving inklecate's alone.
+    setChoosatronIssues: (list) => {
+        choosatronIssues = list;
+        issues = _.reject(issues, i => i.choosatron).concat(list);
+    },
     choose: choose,
     rewind: rewind,
     stepBack: stepBack,

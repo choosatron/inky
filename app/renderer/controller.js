@@ -23,6 +23,8 @@ const NavView = require("./navView.js").NavView;
 const ExpressionWatchView = require("./expressionWatchView").ExpressionWatchView;
 const LiveCompiler = require("./liveCompiler.js").LiveCompiler;
 const InkProject = require("./inkProject.js").InkProject;
+// CHOOSATRON: warns while writing that a character will not reach the paper.
+const ChoosatronWarnings = require("./choosatron/warnings.js").ChoosatronWarnings;
 const NavHistory = require("./navHistory.js").NavHistory;
 const GotoAnything = require("./goto.js").GotoAnything;
 const i18n = require("./i18n.js");
@@ -91,6 +93,7 @@ LiveCompiler.setEvents({
         PlayerView.prepareForNewPlaythrough(sessionId);
         EditorView.clearErrors();
         ToolbarView.clearIssueSummary();
+        ChoosatronWarnings.refresh(); // CHOOSATRON: the two clears above dropped ours too.
     },
     selectIssue: gotoIssue,
     textAdded: (text) => {
@@ -227,6 +230,7 @@ ipc.on("keyboard-shortcuts", (event, visible) => {
 EditorView.setEvents({
     "change": () => {
         LiveCompiler.setEdited();
+        ChoosatronWarnings.scheduleRescan(); // CHOOSATRON: re-check what the printer can draw.
         NavView.setKnots(InkProject.currentProject.activeInkFile);
     },
     "jumpToSymbol": (symbolName, contextPos) => {
