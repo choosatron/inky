@@ -104,6 +104,47 @@ git lfs pull
 If `inklecate_mac` is about 130 bytes and starts with
 `version https://git-lfs.github.com/spec/v1`, this is the step you missed.
 
+## Installing dependencies
+
+```bash
+cd app && npm install
+```
+
+Two traps here, both of which fail quietly.
+
+**npm will not run install scripts unless they are approved.** electron's
+`postinstall` is what downloads the actual Electron binary, so without it
+`npm install` reports success and leaves you with no runnable app. The
+approvals are recorded in `app/package.json` as `allowScripts`, which is why
+that upstream file carries a Choosatron change it cannot mark with a comment:
+
+```json
+"allowScripts": {
+  "electron@30.0.4": true,
+  "fsevents@2.3.3": true
+}
+```
+
+If that block is ever lost to a merge, `npm install-scripts ls` will show the
+packages as pending and the app will not start.
+
+**electron's extractor can fail silently on a new Node.** `extract-zip` 2.0.1,
+which electron 30 depends on, exits 0 without extracting on Node 26 — leaving
+`node_modules/electron/dist/` holding only `LICENSES.chromium.html` and no
+`path.txt`. The download itself is fine, so the cached zip can be extracted by
+hand:
+
+```bash
+cd app/node_modules/electron
+ZIP=$(find ~/Library/Caches/electron -name 'electron-v30.0.4-darwin-arm64.zip' | head -1)
+rm -rf dist && mkdir dist
+ditto -x -k "$ZIP" dist                                   # ditto, not unzip: it is an .app bundle
+printf 'Electron.app/Contents/MacOS/Electron' > path.txt   # no trailing newline
+```
+
+Verify with `./node_modules/.bin/electron --version`, which should print the
+version rather than an error about a missing binary.
+
 ## What we have added
 
 ### Printer coverage warnings

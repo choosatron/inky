@@ -45,5 +45,9 @@
   },
   "optionalDependencies": {
     "appdmg": "^0.6.6"
+  },
+  "allowScripts": {
+    "electron@30.0.4": true,
+    "fsevents@2.3.3": true
   }
 }
